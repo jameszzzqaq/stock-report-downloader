@@ -20,7 +20,7 @@ stock-report-downloader = "report_downloader.cli:main"
 package = true
 
 [tool.setuptools]
-package-dir = {"" = "src"}
+package-dir = {"" = "scripts"}
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["scripts"]

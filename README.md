@@ -1,4 +1,4 @@
-﻿# 财报下载工具
+# 财报下载工具
 
 一个基于 Python 的命令行工具，用于下载 A 股和港股上市公司的财务报告 PDF。
 
@@ -129,7 +129,14 @@ uv run stock-report-downloader 06049 -t annual -y 2023 -m hk -l en -o ./test_out
 
 ```text
 stock-report-downloader/
-├── src/
+├── SKILL.md
+├── agents/
+│   └── openai.yaml
+├── references/
+│   └── usage.md
+├── scripts/
+│   ├── run_report.py
+│   ├── verify_examples.py
 │   └── report_downloader/
 │       ├── __init__.py
 │       ├── __main__.py
@@ -189,7 +196,7 @@ uv run stock-report-downloader 999999 -t annual -y 2024
 
 ### A 股
 
-A 股下载逻辑位于 `src/report_downloader/downloader_cninfo.py`：
+A 股下载逻辑位于 `scripts/report_downloader/downloader_cninfo.py`：
 - 自动推导交易所与 `orgId`
 - 用 `stock=代码,orgId` 访问 `cninfo` 公告接口
 - 年报查询窗口扩展到次年，避免漏掉实际披露日期落在下一年的情况
@@ -197,7 +204,7 @@ A 股下载逻辑位于 `src/report_downloader/downloader_cninfo.py`：
 
 ### 港股
 
-港股下载逻辑位于 `src/report_downloader/downloader_hkex.py`：
+港股下载逻辑位于 `scripts/report_downloader/downloader_hkex.py`：
 - 先通过 `partial.do` 解析 HKEX 内部 `stockId`
 - 再通过 `titleSearchServlet.do` 获取结果列表
 - 按标题、分类和语言偏好选择目标 PDF
@@ -205,7 +212,7 @@ A 股下载逻辑位于 `src/report_downloader/downloader_cninfo.py`：
 
 ### 名称搜索
 
-名称搜索逻辑位于 `src/report_downloader/stock_search.py`：
+名称搜索逻辑位于 `scripts/report_downloader/stock_search.py`：
 - A 股名称搜索使用 `cninfo` 的 `POST /new/information/topSearch/query`
 - 港股名称搜索使用 `HKEX partial.do`
 - 对港股简体中文名增加了本地简转繁候选回退

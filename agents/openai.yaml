@@ -1,0 +1,4 @@
+interface:
+  display_name: "Stock Report Downloader"
+  short_description: "Run and maintain the stock report downloader"
+  default_prompt: "Use $stock-report-downloader to download or troubleshoot an A-share or HK stock report with the local repository."
