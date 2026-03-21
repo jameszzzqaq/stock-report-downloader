@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import re
 from pathlib import Path
@@ -20,8 +20,9 @@ from .utils import (
 )
 
 
-CNINFO_QUERY_URL = "http://www.cninfo.com.cn/new/hisAnnouncement/query"
-CNINFO_PDF_BASE_URL = "http://static.cninfo.com.cn/"
+CNINFO_QUERY_URL = "https://www.cninfo.com.cn/new/hisAnnouncement/query"
+CNINFO_PDF_BASE_URL = "https://static.cninfo.com.cn/"
+CNINFO_ALLOWED_HOSTS = {"www.cninfo.com.cn", "static.cninfo.com.cn"}
 CNINFO_CATEGORY_MAP = {
     "annual": "category_ndbg_szsh",
     "semi": "category_bndbg_szsh",
@@ -37,8 +38,8 @@ CNINFO_TITLE_KEYWORDS = {
 CNINFO_EXCLUDE_KEYWORDS = ("摘要", "英文版", "取消", "更正", "修订", "说明会", "问询函")
 CNINFO_REQUEST_HEADERS = {
     "X-Requested-With": "XMLHttpRequest",
-    "Origin": "http://www.cninfo.com.cn",
-    "Referer": "http://www.cninfo.com.cn/new/commonUrl?url=disclosure/list/notice",
+    "Origin": "https://www.cninfo.com.cn",
+    "Referer": "https://www.cninfo.com.cn/new/commonUrl?url=disclosure/list/notice",
 }
 
 
@@ -55,7 +56,7 @@ def download_cninfo_report(
     directory = ensure_directory(output_dir)
     filename = document.filename_hint or build_output_filename(stock, year, report_type, document.title)
     destination = directory / filename
-    return download_file(active_session, document.url, destination)
+    return download_file(active_session, document.url, destination, allowed_hosts=CNINFO_ALLOWED_HOSTS)
 
 
 def find_cninfo_report(
@@ -124,7 +125,7 @@ def _extract_documents(
         results.append(
             ReportDocument(
                 title=title,
-                url=absolute_url(CNINFO_PDF_BASE_URL, adjunct),
+                url=absolute_url(CNINFO_PDF_BASE_URL, adjunct, allowed_hosts=CNINFO_ALLOWED_HOSTS),
                 language="sc",
                 published_at=published,
                 filename_hint=build_output_filename(stock, year, report_type, title),

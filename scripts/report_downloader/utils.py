@@ -6,7 +6,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 import requests
 
@@ -20,12 +20,7 @@ DEFAULT_HEADERS = {
     ),
     "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
 }
-REPORT_TYPE_LABELS = {
-    "annual": "annual",
-    "semi": "semi",
-    "q1": "q1",
-    "q3": "q3",
-}
+SECURE_SCHEMES = {"https"}
 
 
 class DownloaderError(Exception):
@@ -149,7 +144,9 @@ def download_file(
     destination: Path,
     *,
     chunk_size: int = 65536,
+    allowed_hosts: set[str] | None = None,
 ) -> Path:
+    validate_remote_url(url, allowed_hosts=allowed_hosts)
     response = request(session, "GET", url, stream=True)
     total = int(response.headers.get("Content-Length", 0))
     received = 0
@@ -184,5 +181,23 @@ def build_output_filename(
     return sanitize_filename("_".join(parts)) + ".pdf"
 
 
-def absolute_url(base_url: str, maybe_relative: str) -> str:
-    return urljoin(base_url, maybe_relative)
+def absolute_url(
+    base_url: str,
+    maybe_relative: str,
+    *,
+    allowed_hosts: set[str] | None = None,
+) -> str:
+    combined = urljoin(base_url, maybe_relative)
+    validate_remote_url(combined, allowed_hosts=allowed_hosts)
+    return combined
+
+
+def validate_remote_url(url: str, *, allowed_hosts: set[str] | None = None) -> str:
+    parsed = urlparse(url)
+    scheme = parsed.scheme.lower()
+    host = (parsed.hostname or "").lower()
+    if scheme not in SECURE_SCHEMES:
+        raise DownloadError(f"拒绝不安全的下载地址: {url}")
+    if allowed_hosts and host not in {value.lower() for value in allowed_hosts}:
+        raise DownloadError(f"拒绝非白名单下载地址: {url}")
+    return url

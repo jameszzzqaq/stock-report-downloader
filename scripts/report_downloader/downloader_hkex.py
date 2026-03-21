@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import re
@@ -23,6 +23,7 @@ HKEX_SEARCH_URL = "https://www1.hkexnews.hk/search/titlesearch.xhtml"
 HKEX_SERVLET_URL = "https://www1.hkexnews.hk/search/titleSearchServlet.do"
 HKEX_PARTIAL_URL = "https://www1.hkexnews.hk/search/partial.do"
 HKEX_BASE_URL = "https://www1.hkexnews.hk/"
+HKEX_ALLOWED_HOSTS = {"www1.hkexnews.hk"}
 HKEX_LOOKUP_HEADERS = {
     "X-Requested-With": "XMLHttpRequest",
     "Referer": HKEX_SEARCH_URL,
@@ -66,7 +67,7 @@ def download_hkex_report(
     directory = ensure_directory(output_dir)
     filename = document.filename_hint or build_output_filename(stock, year, report_type, document.title)
     destination = directory / filename
-    return download_file(active_session, document.url, destination)
+    return download_file(active_session, document.url, destination, allowed_hosts=HKEX_ALLOWED_HOSTS)
 
 
 def find_hkex_report(
@@ -204,7 +205,7 @@ def _extract_documents(
         documents.append(
             ReportDocument(
                 title=title,
-                url=absolute_url(HKEX_BASE_URL, file_link),
+                url=absolute_url(HKEX_BASE_URL, file_link, allowed_hosts=HKEX_ALLOWED_HOSTS),
                 language=_detect_language_from_link(file_link, preferred_language),
                 published_at=published_at,
             )

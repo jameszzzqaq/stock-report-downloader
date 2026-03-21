@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import re
@@ -16,10 +16,10 @@ from .utils import (
 )
 
 
-CNINFO_SEARCH_URL = "http://www.cninfo.com.cn/new/information/topSearch/query"
+CNINFO_SEARCH_URL = "https://www.cninfo.com.cn/new/information/topSearch/query"
 HKEX_PARTIAL_URL = "https://www1.hkexnews.hk/search/partial.do"
 CNINFO_SEARCH_HEADERS = {
-    "Referer": "http://www.cninfo.com.cn/",
+    "Referer": "https://www.cninfo.com.cn/",
     "X-Requested-With": "XMLHttpRequest",
 }
 HKEX_SEARCH_HEADERS = {
