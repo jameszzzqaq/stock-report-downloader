@@ -16,6 +16,9 @@ dependencies = [
 [project.scripts]
 stock-report-downloader = "report_downloader.cli:main"
 
+[tool.uv]
+package = true
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 

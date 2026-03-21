@@ -34,33 +34,40 @@
 ## 安装
 
 ```bash
-pip install -e .
+uv sync
 ```
 
-如果当前环境不方便执行 editable install，也可以直接用源码目录运行：
+首次进入项目后，`uv` 会在本地创建虚拟环境并按 `uv.lock` 安装依赖。
 
-```powershell
-$env:PYTHONPATH="src"
-python -m report_downloader --help
+如果你修改了依赖并希望更新锁文件：
+
+```bash
+uv lock
+uv sync
 ```
 
-如果只想按旧方式安装第三方依赖，也可以：
+如果需要新增依赖，推荐使用：
 
-```txt
-pip install -r requirements.txt
+```bash
+uv add requests beautifulsoup4
 ```
 
-核心依赖：
+如果只想直接运行命令，不手动激活环境：
 
-```txt
-requests>=2.28.0
-beautifulsoup4>=4.11.0
+```bash
+uv run stock-report-downloader --help
+```
+
+或者：
+
+```bash
+uv run python -m report_downloader --help
 ```
 
 ## 用法
 
 ```bash
-python -m report_downloader STOCK --type TYPE --year YEAR [options]
+uv run stock-report-downloader STOCK --type TYPE --year YEAR [options]
 ```
 
 参数说明：
@@ -77,13 +84,13 @@ python -m report_downloader STOCK --type TYPE --year YEAR [options]
 查看帮助：
 
 ```bash
-stock-report-downloader --help
+uv run stock-report-downloader --help
 ```
 
 或者：
 
 ```bash
-python -m report_downloader --help
+uv run python -m report_downloader --help
 ```
 
 ## 使用示例
@@ -91,31 +98,31 @@ python -m report_downloader --help
 A 股代码下载：
 
 ```bash
-python -m report_downloader 000001 -t annual -y 2024 -o ./test_output
+uv run stock-report-downloader 000001 -t annual -y 2024 -o ./test_output
 ```
 
 A 股名称下载：
 
 ```bash
-python -m report_downloader 平安银行 -t annual -y 2024 -o ./test_output
+uv run stock-report-downloader 平安银行 -t annual -y 2024 -o ./test_output
 ```
 
 港股代码下载：
 
 ```bash
-python -m report_downloader 06049 -t annual -y 2023 -m hk -o ./test_output
+uv run stock-report-downloader 06049 -t annual -y 2023 -m hk -o ./test_output
 ```
 
 港股名称下载：
 
 ```bash
-python -m report_downloader 保利物业 -t annual -y 2023 -m hk -o ./test_output
+uv run stock-report-downloader 保利物业 -t annual -y 2023 -m hk -o ./test_output
 ```
 
 港股英文版优先：
 
 ```bash
-python -m report_downloader 06049 -t annual -y 2023 -m hk -l en -o ./test_output
+uv run stock-report-downloader 06049 -t annual -y 2023 -m hk -l en -o ./test_output
 ```
 
 ## 当前项目结构
@@ -131,8 +138,9 @@ stock-report-downloader/
 │       ├── downloader_hkex.py
 │       ├── stock_search.py
 │       └── utils.py
+├── .python-version
 ├── pyproject.toml
-├── requirements.txt
+├── uv.lock
 └── test_output/
 ```
 
@@ -142,38 +150,38 @@ stock-report-downloader/
 
 1. A 股代码下载
 ```bash
-python -m report_downloader 000001 -t annual -y 2024 -o ./test_output
+uv run stock-report-downloader 000001 -t annual -y 2024 -o ./test_output
 ```
 输出示例：
 `000001_平安银行_2024_annual_2024年年度报告.pdf`
 
 2. 港股代码下载
 ```bash
-python -m report_downloader 06049 -t annual -y 2023 -m hk -o ./test_output
+uv run stock-report-downloader 06049 -t annual -y 2023 -m hk -o ./test_output
 ```
 输出示例：
 `06049_保利物業_2023_annual_2023年度報告.pdf`
 
 3. A 股名称搜索下载
 ```bash
-python -m report_downloader 平安银行 -t annual -y 2024 -o ./test_output
+uv run stock-report-downloader 平安银行 -t annual -y 2024 -o ./test_output
 ```
 
 4. 港股名称搜索下载
 ```bash
-python -m report_downloader 保利物业 -t annual -y 2023 -m hk -o ./test_output
+uv run stock-report-downloader 保利物业 -t annual -y 2023 -m hk -o ./test_output
 ```
 
 5. 港股英文版优先下载
 ```bash
-python -m report_downloader 06049 -t annual -y 2023 -m hk -l en -o ./test_output
+uv run stock-report-downloader 06049 -t annual -y 2023 -m hk -l en -o ./test_output
 ```
 输出示例：
 `06049_保利物業_2023_annual_2023 ANNUAL REPORT.pdf`
 
 6. 错误处理
 ```bash
-python -m report_downloader 999999 -t annual -y 2024
+uv run stock-report-downloader 999999 -t annual -y 2024
 ```
 返回非零退出码，并输出友好错误信息。
 
