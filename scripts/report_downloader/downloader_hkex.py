@@ -111,18 +111,16 @@ def _resolve_stock_id(stock: StockTarget, session: requests.Session) -> str:
     matches = re.search(r"callback\((.*)\)\s*;?\s*$", response.text, re.S)
     if not matches:
         raise ReportNotFoundError(f"无法解析港股代码 {stock.code} 的 HKEX 证券标识。")
-    payload = json.loads(matches.group(1))
+    try:
+        payload = json.loads(matches.group(1))
+    except json.JSONDecodeError as exc:
+        raise ReportNotFoundError(f"无法解析港股代码 {stock.code} 的 HKEX 证券标识。") from exc
     stock_info = payload.get("stockInfo", [])
     for item in stock_info:
         if str(item.get("code", "")).zfill(5) == stock.code:
             stock.name = stock.name or str(item.get("name", "")).strip()
             stock.stock_id = str(item.get("stockId", "")).strip()
             return stock.stock_id
-    if stock_info:
-        first = stock_info[0]
-        stock.name = stock.name or str(first.get("name", "")).strip()
-        stock.stock_id = str(first.get("stockId", "")).strip()
-        return stock.stock_id
     raise ReportNotFoundError(f"未找到港股代码 {stock.code} 对应的 HKEX 证券标识。")
 
 
@@ -206,7 +204,7 @@ def _extract_documents(
             ReportDocument(
                 title=title,
                 url=absolute_url(HKEX_BASE_URL, file_link, allowed_hosts=HKEX_ALLOWED_HOSTS),
-                language=_detect_language_from_link(file_link, preferred_language),
+                language=_detect_language_from_link(file_link),
                 published_at=published_at,
             )
         )
@@ -228,13 +226,17 @@ def _matches_report(title: str, long_text: str, report_type: str, year: int) -> 
     return any(keyword.lower() in normalized_long for keyword in HKEX_LONG_TEXT_KEYWORDS[report_type])
 
 
-def _detect_language_from_link(file_link: str, preferred_language: str) -> str:
+def _detect_language_from_link(file_link: str) -> str:
     lowered = file_link.lower()
-    if lowered.endswith('_c.pdf'):
-        return 'zh' if preferred_language == 'sc' else 'tc'
-    if lowered.endswith('_e.pdf') or lowered.endswith('.pdf'):
-        return 'en' if preferred_language == 'en' else 'unknown'
-    return 'unknown'
+    if lowered.endswith(("_ce.pdf", "_ec.pdf")):
+        return "bilingual"
+    if lowered.endswith("_c.pdf"):
+        return "zh"
+    if lowered.endswith("_e.pdf"):
+        return "en"
+    if lowered.endswith(".pdf"):
+        return "unknown"
+    return "unknown"
 
 
 def _language_rank(language: str, preferred: str) -> int:

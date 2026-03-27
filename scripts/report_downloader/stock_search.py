@@ -375,7 +375,10 @@ def _search_hk_by_single_name(name: str, session: requests.Session) -> StockTarg
     match = re.search(r"callback\((.*)\)\s*;?\s*$", response.text, re.S)
     if not match:
         return None
-    payload = json.loads(match.group(1))
+    try:
+        payload = json.loads(match.group(1))
+    except json.JSONDecodeError as exc:
+        raise SearchError("HKEX 返回了无法解析的证券搜索结果。") from exc
     stock_info = payload.get("stockInfo", [])
     for item in stock_info:
         stock_name = str(item.get("name") or "").strip()
@@ -392,17 +395,6 @@ def _search_hk_by_single_name(name: str, session: requests.Session) -> StockTarg
             name=stock_name,
             stock_id=str(item.get("stockId") or "").strip(),
             extra={"raw": item},
-        )
-
-    if stock_info:
-        first = stock_info[0]
-        return StockTarget(
-            query=name,
-            code=normalize_hk_code(str(first.get("code") or "")),
-            market="hk",
-            name=str(first.get("name") or "").strip(),
-            stock_id=str(first.get("stockId") or "").strip(),
-            extra={"raw": first},
         )
     return None
 

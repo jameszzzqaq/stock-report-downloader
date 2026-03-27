@@ -148,20 +148,43 @@ def download_file(
 ) -> Path:
     validate_remote_url(url, allowed_hosts=allowed_hosts)
     response = request(session, "GET", url, stream=True)
+    _validate_download_response(response, url)
     total = int(response.headers.get("Content-Length", 0))
     received = 0
-    with destination.open("wb") as handle:
-        for chunk in response.iter_content(chunk_size=chunk_size):
-            if not chunk:
-                continue
-            handle.write(chunk)
-            received += len(chunk)
-            if total:
-                percent = received * 100 // total
-                print(f"\r下载中: {percent:3d}% ", end="", flush=True)
+    first_chunk = True
+    try:
+        with destination.open("wb") as handle:
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                if not chunk:
+                    continue
+                if first_chunk:
+                    _validate_pdf_signature(chunk, url)
+                    first_chunk = False
+                handle.write(chunk)
+                received += len(chunk)
+                if total:
+                    percent = received * 100 // total
+                    print(f"\r下载中: {percent:3d}% ", end="", flush=True)
+        if first_chunk:
+            raise DownloadError(f"下载内容为空: {url}")
+    except Exception:
+        destination.unlink(missing_ok=True)
+        raise
     if total:
         print("\r下载完成      ")
     return destination
+
+
+def _validate_download_response(response: requests.Response, url: str) -> None:
+    content_type = (response.headers.get("Content-Type") or "").lower()
+    suspicious_markers = ("text/html", "text/plain", "application/json", "text/json", "xml")
+    if any(marker in content_type for marker in suspicious_markers):
+        raise DownloadError(f"下载地址未返回 PDF 内容: {url}")
+
+
+def _validate_pdf_signature(chunk: bytes, url: str) -> None:
+    if not chunk.lstrip().startswith(b"%PDF-"):
+        raise DownloadError(f"下载地址未返回有效 PDF 文件: {url}")
 
 
 def build_output_filename(

@@ -9,7 +9,6 @@ description = "CLI tool for downloading A-share and HK stock financial reports"
 requires-python = ">=3.10"
 dependencies = [
     "requests>=2.28.0",
-    "beautifulsoup4>=4.11.0",
 ]
 
 [project.scripts]

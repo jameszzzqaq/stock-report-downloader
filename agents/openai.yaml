@@ -1,4 +1,4 @@
 interface:
   display_name: "Stock Report Downloader"
   short_description: "Run and maintain the stock report downloader"
-  default_prompt: "Use $stock-report-downloader to download or troubleshoot an A-share or HK stock report with the local repository."
+  default_prompt: "Use $stock-report-downloader to download or troubleshoot an A-share or HK stock report with the local repository. Prefer the existing uv-managed CLI entrypoint, read references/usage.md first, run offline tests before live downloads when validating changes, and modify the existing downloader modules instead of writing ad hoc scraping code."
