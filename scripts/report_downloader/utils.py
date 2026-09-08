@@ -224,3 +224,14 @@ def validate_remote_url(url: str, *, allowed_hosts: set[str] | None = None) -> s
     if allowed_hosts and host not in {value.lower() for value in allowed_hosts}:
         raise DownloadError(f"拒绝非白名单下载地址: {url}")
     return url
+
+
+def safe_json(response: requests.Response) -> object:
+    try:
+        return response.json()
+    except ValueError:
+        return {}
+
+
+def names_match(query: str, candidate: str) -> bool:
+    return bool(query) and bool(candidate) and (query == candidate or query in candidate or candidate in query)

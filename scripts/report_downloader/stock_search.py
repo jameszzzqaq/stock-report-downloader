@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Callable
 
 import requests
 
@@ -10,9 +11,11 @@ from .utils import (
     StockTarget,
     build_session,
     is_chinese_text,
+    names_match,
     normalize_a_code,
     normalize_hk_code,
     request,
+    safe_json,
 )
 
 
@@ -264,6 +267,49 @@ SIMPLE_TO_TRADITIONAL_MAP = str.maketrans({
     "麦": "麥",
     "黄": "黃",
     "齐": "齊",
+    # ponytail: not OpenCC; add issuer-name pairs when a live HK search misses
+    "为": "為",
+    "开": "開",
+    "会": "會",
+    "团": "團",
+    "学": "學",
+    "经": "經",
+    "济": "濟",
+    "与": "與",
+    "于": "於",
+    "现": "現",
+    "设": "設",
+    "价": "價",
+    "区": "區",
+    "亿": "億",
+    "从": "從",
+    "对": "對",
+    "个": "個",
+    "营": "營",
+    "处": "處",
+    "备": "備",
+    "导": "導",
+    "当": "當",
+    "录": "錄",
+    "愿": "願",
+    "虑": "慮",
+    "师": "師",
+    "带": "帶",
+    "帮": "幫",
+    "异": "異",
+    "归": "歸",
+    "头": "頭",
+    "内": "內",
+    "并": "並",
+    "两": "兩",
+    "说": "說",
+    "给": "給",
+    "没": "沒",
+    "样": "樣",
+    "种": "種",
+    "称": "稱",
+    "据": "據",
+    "条": "條",
 })
 
 
@@ -333,20 +379,17 @@ def search_cninfo_by_name(name: str, session: requests.Session) -> StockTarget |
         params={"keyWord": name, "maxNum": 20},
         headers=CNINFO_SEARCH_HEADERS,
     )
-    payload = _safe_json(response)
+    payload = safe_json(response)
     candidates = _iter_cninfo_candidates(payload)
-    for candidate in candidates:
-        sec_name = str(candidate.get("zwjc") or candidate.get("secName") or "").strip()
-        sec_code = str(candidate.get("code") or candidate.get("secCode") or "").strip()
-        if not sec_code:
-            continue
-        if name not in sec_name and sec_name not in name:
-            continue
-        return _build_a_target(name, candidate)
-
-    if candidates:
-        return _build_a_target(name, candidates[0])
-    return None
+    matched = _best_named_item(
+        name,
+        candidates,
+        lambda item: str(item.get("zwjc") or item.get("secName") or "").strip(),
+        lambda item: str(item.get("code") or item.get("secCode") or "").strip(),
+    )
+    if matched is None:
+        return None
+    return _build_a_target(name, matched)
 
 
 def search_hk_by_name(name: str, session: requests.Session) -> StockTarget | None:
@@ -380,23 +423,24 @@ def _search_hk_by_single_name(name: str, session: requests.Session) -> StockTarg
     except json.JSONDecodeError as exc:
         raise SearchError("HKEX 返回了无法解析的证券搜索结果。") from exc
     stock_info = payload.get("stockInfo", [])
-    for item in stock_info:
-        stock_name = str(item.get("name") or "").strip()
-        stock_code = str(item.get("code") or "").strip()
-        if not stock_code:
-            continue
-        if name not in stock_name and stock_name not in name:
-            continue
-        code = normalize_hk_code(stock_code)
-        return StockTarget(
-            query=name,
-            code=code,
-            market="hk",
-            name=stock_name,
-            stock_id=str(item.get("stockId") or "").strip(),
-            extra={"raw": item},
-        )
-    return None
+    items = [item for item in stock_info if isinstance(item, dict)]
+    matched = _best_named_item(
+        name,
+        items,
+        lambda item: str(item.get("name") or "").strip(),
+        lambda item: str(item.get("code") or "").strip(),
+    )
+    if matched is None:
+        return None
+    stock_code = str(matched.get("code") or "").strip()
+    return StockTarget(
+        query=name,
+        code=normalize_hk_code(stock_code),
+        market="hk",
+        name=str(matched.get("name") or "").strip(),
+        stock_id=str(matched.get("stockId") or "").strip(),
+        extra={"raw": matched},
+    )
 
 
 def _hk_name_candidates(name: str) -> list[str]:
@@ -405,6 +449,25 @@ def _hk_name_candidates(name: str) -> list[str]:
     if converted != name:
         candidates.append(converted)
     return candidates
+
+
+def _best_named_item(
+    query: str,
+    items: list[dict],
+    name_of: Callable[[dict], str],
+    code_of: Callable[[dict], str],
+) -> dict | None:
+    partial: dict | None = None
+    for item in items:
+        item_name = name_of(item)
+        item_code = code_of(item)
+        if not item_code:
+            continue
+        if query == item_name or query == item_code:
+            return item
+        if partial is None and names_match(query, item_name):
+            partial = item
+    return partial
 
 
 def _build_a_target(query: str, candidate: dict) -> StockTarget:
@@ -421,13 +484,6 @@ def _build_a_target(query: str, candidate: dict) -> StockTarget:
         stock_id=str(candidate.get("stockCode") or "").strip(),
         extra={"raw": candidate},
     )
-
-
-def _safe_json(response: requests.Response) -> object:
-    try:
-        return response.json()
-    except ValueError:
-        return {}
 
 
 def _iter_cninfo_candidates(payload: object) -> list[dict]:

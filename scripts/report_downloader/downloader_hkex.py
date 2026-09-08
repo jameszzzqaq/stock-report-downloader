@@ -31,14 +31,14 @@ HKEX_LOOKUP_HEADERS = {
 HKEX_KEYWORDS = {
     "annual": ("annual report", "年度報告", "年度报告", "年報", "年报"),
     "semi": ("interim report", "中期報告", "中期报告", "half-year report", "half year report"),
-    "q1": ("first quarterly", "第一季度", "一季度", "quarterly report"),
-    "q3": ("third quarterly", "第三季度", "三季度", "quarterly report"),
+    "q1": ("first quarterly", "1st quarterly", "第一季度", "一季度", "首季度"),
+    "q3": ("third quarterly", "3rd quarterly", "第三季度", "三季度"),
 }
 HKEX_LONG_TEXT_KEYWORDS = {
-    "annual": ("[年報]", "[年报]", "annual", "financial statements"),
-    "semi": ("[中期/半年度報告]", "[中期/半年度报告]", "interim"),
-    "q1": ("quarter",),
-    "q3": ("quarter",),
+    "annual": ("[年報]", "[年报]", "annual report"),
+    "semi": ("[中期/半年度報告]", "[中期/半年度报告]", "interim report"),
+    "q1": ("[第一季度", "first quarterly"),
+    "q3": ("[第三季度", "third quarterly"),
 }
 HKEX_EXCLUDE = {
     "annual": ("業績公告", "业绩公告", "results announcement", "補充公告", "补充公告"),
