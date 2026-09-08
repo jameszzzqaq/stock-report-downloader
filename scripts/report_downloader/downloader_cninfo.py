@@ -17,6 +17,7 @@ from .utils import (
     ensure_directory,
     report_publish_date_range,
     request,
+    safe_json,
 )
 
 
@@ -75,7 +76,7 @@ def find_cninfo_report(
         data=payload,
         headers=CNINFO_REQUEST_HEADERS,
     )
-    data = _safe_json(response)
+    data = safe_json(response)
     announcements = data.get("announcements") if isinstance(data, dict) else []
     documents = _extract_documents(announcements or [], stock, report_type, year)
     if not documents:
@@ -151,11 +152,3 @@ def _title_rank(title: str) -> tuple[int, int]:
     if "全文" in title:
         penalty -= 1
     return (penalty, len(title))
-
-
-def _safe_json(response: requests.Response) -> object:
-    try:
-        return response.json()
-    except ValueError:
-        return {}
-

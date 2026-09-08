@@ -85,12 +85,15 @@ uv run scripts/run_report.py 999999 -t annual -y 2024
 - Annual reports search across the next filing year to catch next-year disclosures.
 - Output filenames include stock code and stock name.
 - HK simplified Chinese names use a lightweight local simplified-to-traditional fallback.
+- Name search prefers an exact name or code match, then a substring match. It does not fall back to the first unrelated search hit.
+- HK quarterly matching requires first/third-quarter wording. A generic "quarterly report" title is not enough.
 
 ## Known Limitations
 
-- HK simplified-name compatibility is not full OpenCC-grade conversion.
+- HK simplified-name compatibility is not full OpenCC-grade conversion; extra issuer-name pairs are added only when a live search misses.
 - Some HK issuers only publish one language version PDF; `--lang` only changes selection priority.
 - External site structure changes may require updates in the downloader modules.
+- Chinese names still default to A-share. Use `--market hk` when the issuer may be listed in Hong Kong.
 
 ## Troubleshooting Map
 

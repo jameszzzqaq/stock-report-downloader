@@ -60,6 +60,8 @@ uv run scripts/run_report.py 06049 -t annual -y 2023 -m hk -l en -o "$OUTPUT_DIR
 
 - Always pass `--output`. The CLI default is `.`, which writes into the skill directory if you `cd` here.
 - Chinese names without `--market` are treated as A-share. Use `--market hk` for Hong Kong names.
+- Name search prefers an exact name or code, then a substring. It does not take the first unrelated hit.
+- HK quarterly titles need first/third-quarter wording. A generic "quarterly report" is not enough.
 - `--lang` does not create a missing language version.
 - Annual reports may be filed in the next calendar year; the CLI already searches that window.
 - Output names look like `{code}_{name}_{year}_{type}_{title}.pdf`. Keep that convention unless the user asks otherwise.
@@ -68,9 +70,9 @@ uv run scripts/run_report.py 06049 -t annual -y 2023 -m hk -l en -o "$OUTPUT_DIR
 
 Read [references/usage.md](references/usage.md) for verified commands and the troubleshooting map.
 
-- Name or code resolution: `scripts/report_downloader/stock_search.py`
+- Name or code resolution: `scripts/report_downloader/stock_search.py` (no first-hit fallback; prefer an exact name or `--market`)
 - A-share / cninfo match: `scripts/report_downloader/downloader_cninfo.py`
-- HKEX lookup or language: `scripts/report_downloader/downloader_hkex.py`
+- HKEX lookup or language: `scripts/report_downloader/downloader_hkex.py` (quarterly titles need first/third-quarter wording)
 - PDF / network validation: `scripts/report_downloader/utils.py`
 - CLI flags: `scripts/report_downloader/cli.py`
 
