@@ -54,10 +54,12 @@ Use the existing downloader implementation in this repository instead of writing
 
 - A-share name or code resolution issues:
   - inspect `scripts/report_downloader/stock_search.py`
+  - name search no longer accepts the first unrelated candidate; prefer an exact name or `--market`
 - cninfo query returns no report or the wrong announcement:
   - inspect `scripts/report_downloader/downloader_cninfo.py`
 - HKEX security lookup, language selection, or title filtering issues:
   - inspect `scripts/report_downloader/downloader_hkex.py`
+  - quarterly reports need first/third-quarter wording, not a generic quarterly title
 - Download succeeds but content is not a valid PDF, or network errors are unclear:
   - inspect `scripts/report_downloader/utils.py`
 - CLI argument handling or end-user invocation behavior:
