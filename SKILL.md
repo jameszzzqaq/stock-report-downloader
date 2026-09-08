@@ -1,74 +1,88 @@
 ---
 name: stock-report-downloader
-description: Use when working in this repository or when a user asks to download, verify, or troubleshoot A-share and HK stock financial reports with the local downloader. Trigger this skill for tasks such as running the existing CLI, validating stock-name resolution, checking language selection, verifying known report examples, or fixing cninfo/HKEX downloader behavior instead of rebuilding the workflow from scratch.
+description: Download A-share and Hong Kong stock financial report PDFs (annual, semi, q1, q3) from cninfo and HKEX by stock code or company name. Use when a user asks to download 年报, 中报, 季报, 财报, A-share or HK reports, HKEX filings, 巨潮资讯 PDFs, or to run stock-report-downloader. Prefer this bundled CLI instead of writing scrape scripts.
+compatibility: Requires Python 3.10+, uv (or pip + requests), and HTTPS access to www.cninfo.com.cn and www1.hkexnews.hk
+metadata:
+  version: "0.1.0"
 ---
 
 # Stock Report Downloader
 
-Use the existing downloader implementation in this repository instead of writing one-off scraping code.
+Download A-share and HK financial report PDFs with the bundled CLI. Do not scrape cninfo or HKEX yourself.
+
+This directory is a portable [Agent Skill](https://agentskills.io). Install it as `stock-report-downloader` under `.agents/skills/` (project) or `~/.agents/skills/` (user). Codex can also use this repository as the skill root.
 
 ## Inputs
 
-- Required user inputs:
-  - `stock`: stock code or company name.
-  - `--type`: one of `annual`, `semi`, `q1`, `q3`.
-  - `--year`: report year.
-- Optional but sometimes required:
-  - `--market hk` when a Chinese company name could refer to a Hong Kong issuer.
-  - `--lang` only matters for HK reports and only changes selection priority.
-  - `--output` when the user wants files in a specific directory.
-- Ambiguity handling:
-  - If the user gives a numeric code, prefer the code directly.
-  - If the user gives a Chinese company name and it might be a Hong Kong issuer, prefer asking for or setting `--market hk` explicitly instead of guessing.
-  - If required inputs are missing, gather them before running the downloader.
+Collect these before running:
+
+- `stock`: code or company name (`000001`, `平安银行`, `06049`, `06049.HK`)
+- `--type`: `annual` | `semi` | `q1` | `q3`
+- `--year`: report year
+- `--output`: always set this to the user's requested folder, or the user's current working directory
+
+Optional:
+
+- `--market hk` when a Chinese name might be a Hong Kong issuer. Numeric codes are inferred (`6` digits → A-share, `≤5` digits or `.HK` → HK). Chinese names default to A-share.
+- `--lang sc|tc|en` only changes HK language priority. Some issuers publish one language.
+
+If a required input is missing, ask. Do not guess `--market` for an ambiguous Chinese name.
 
 ## Workflow
 
-1. Work from the repository root that contains `pyproject.toml`, `uv.lock`, and `scripts/report_downloader/`.
-2. Use `uv run stock-report-downloader ...` as the primary entrypoint for all normal work.
-3. Use `uv run python scripts/run_report.py ...` only when you specifically need the wrapper script for debugging or scripting from the skill root.
-4. Use `uv run python scripts/verify_examples.py --list --details` only to inspect or replay built-in live examples.
-5. For Chinese stock names with market ambiguity, set `--market hk` for Hong Kong stocks.
-6. Keep downloads in a user-specified directory, or use `./test_output` for verification runs.
+1. Resolve the skill root (the directory that contains this `SKILL.md`).
+2. Run the bundled script from that root. Always pass `--output` so files do not land inside the skill folder.
 
-## What To Check First
+```bash
+uv run scripts/run_report.py STOCK --type TYPE --year YEAR --output OUTPUT_DIR
+```
 
-- Read `references/usage.md` for tested commands, expected behavior, and known limitations.
-- Inspect the existing modules before changing behavior:
-  - `scripts/report_downloader/cli.py`
-  - `scripts/report_downloader/stock_search.py`
-  - `scripts/report_downloader/downloader_cninfo.py`
-  - `scripts/report_downloader/downloader_hkex.py`
-- Keep changes aligned with the existing `uv` workflow in `pyproject.toml` and `uv.lock`.
+If `uv` is unavailable:
 
-## Verification Order
+```bash
+python3 -m pip install -q "requests>=2.28.0"
+python3 scripts/run_report.py STOCK --type TYPE --year YEAR --output OUTPUT_DIR
+```
 
-1. Run deterministic offline checks first:
-   - `uv run python -m unittest discover -s tests -v`
-2. Inspect built-in live examples before choosing one:
-   - `uv run python scripts/verify_examples.py --list --details`
-3. Run a real downloader example only when you need end-to-end validation against cninfo or HKEX.
-4. When updating `references/usage.md`, re-run the affected example and record the current verification date and expected outcome.
+3. Report the saved PDF path from the CLI (`下载完成: ...`). On failure, show the error and stop; do not hand-roll a downloader.
 
-## Troubleshooting
+## Examples
 
-- A-share name or code resolution issues:
-  - inspect `scripts/report_downloader/stock_search.py`
-  - name search no longer accepts the first unrelated candidate; prefer an exact name or `--market`
-- cninfo query returns no report or the wrong announcement:
-  - inspect `scripts/report_downloader/downloader_cninfo.py`
-- HKEX security lookup, language selection, or title filtering issues:
-  - inspect `scripts/report_downloader/downloader_hkex.py`
-  - quarterly reports need first/third-quarter wording, not a generic quarterly title
-- Download succeeds but content is not a valid PDF, or network errors are unclear:
-  - inspect `scripts/report_downloader/utils.py`
-- CLI argument handling or end-user invocation behavior:
-  - inspect `scripts/report_downloader/cli.py`
+```bash
+uv run scripts/run_report.py 000001 -t annual -y 2024 -o "$OUTPUT_DIR"
+uv run scripts/run_report.py 平安银行 -t annual -y 2024 -o "$OUTPUT_DIR"
+uv run scripts/run_report.py 06049 -t annual -y 2023 -m hk -o "$OUTPUT_DIR"
+uv run scripts/run_report.py 保利物业 -t annual -y 2023 -m hk -o "$OUTPUT_DIR"
+uv run scripts/run_report.py 06049 -t annual -y 2023 -m hk -l en -o "$OUTPUT_DIR"
+```
 
-## Guardrails
+## Gotchas
 
-- Do not bypass the CLI and call cninfo/HKEX endpoints directly unless you are debugging or patching the downloader.
-- Preserve the existing filename convention unless the user explicitly asks to change it.
-- Prefer fixing the existing downloader modules over writing ad hoc scripts outside `scripts/`.
-- Treat `references/usage.md` as the source of truth for verified example commands.
-- Prefer the primary CLI entrypoint over wrapper scripts unless there is a concrete reason to use the wrapper.
+- Always pass `--output`. The CLI default is `.`, which writes into the skill directory if you `cd` here.
+- Chinese names without `--market` are treated as A-share. Use `--market hk` for Hong Kong names.
+- Name search prefers an exact name or code, then a substring. It does not take the first unrelated hit.
+- HK quarterly titles need first/third-quarter wording. A generic "quarterly report" is not enough.
+- `--lang` does not create a missing language version.
+- Annual reports may be filed in the next calendar year; the CLI already searches that window.
+- Output names look like `{code}_{name}_{year}_{type}_{title}.pdf`. Keep that convention unless the user asks otherwise.
+
+## When something fails
+
+Read [references/usage.md](references/usage.md) for verified commands and the troubleshooting map.
+
+- Name or code resolution: `scripts/report_downloader/stock_search.py` (no first-hit fallback; prefer an exact name or `--market`)
+- A-share / cninfo match: `scripts/report_downloader/downloader_cninfo.py`
+- HKEX lookup or language: `scripts/report_downloader/downloader_hkex.py` (quarterly titles need first/third-quarter wording)
+- PDF / network validation: `scripts/report_downloader/utils.py`
+- CLI flags: `scripts/report_downloader/cli.py`
+
+Offline checks (from the skill root):
+
+```bash
+uv run python -m unittest discover -s tests -v
+uv run scripts/verify_examples.py --list --details
+```
+
+## Patching this skill
+
+Only when the user is fixing this downloader: edit the modules above, keep the `uv` + `scripts/run_report.py` entrypoint, and update `references/usage.md` together with any changed example.
