@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "stock-report-downloader"
 version = "0.1.0"
-description = "CLI tool for downloading A-share and HK stock financial reports"
+description = "按股票代码或公司名，从巨潮资讯 / 港交所下载 A 股与港股财报 PDF。"
 requires-python = ">=3.10"
 dependencies = [
     "requests>=2.28.0",
