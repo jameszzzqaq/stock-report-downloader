@@ -72,7 +72,7 @@ class NameResolutionTests(unittest.TestCase):
     def test_hk_simplified_name_adds_traditional_candidate(self) -> None:
         self.assertIn("保利物業", _hk_name_candidates("保利物业"))
         self.assertIn("中國平安集團", _hk_name_candidates("中国平安集团"))
-        self.assertEqual(SIMPLE_TO_TRADITIONAL_MAP["团"], "團")
+        self.assertEqual("集团".translate(SIMPLE_TO_TRADITIONAL_MAP), "集團")
 
 
 class TitleMatchingTests(unittest.TestCase):
