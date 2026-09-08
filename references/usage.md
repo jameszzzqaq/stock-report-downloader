@@ -1,31 +1,30 @@
 # Usage Reference
 
+Run every command from the skill root (the directory that contains `SKILL.md`).
+
 ## Run Commands
 
-Run from the repository root.
+Preferred entrypoint (self-contained, works after the skill is copied into any agent's skills folder):
 
 ```bash
-uv sync
-uv run stock-report-downloader --help
+uv run scripts/run_report.py --help
+uv run scripts/run_report.py STOCK --type TYPE --year YEAR --output OUTPUT_DIR
 ```
 
-Use the CLI for normal work:
+If `uv` is unavailable:
 
 ```bash
-uv run stock-report-downloader STOCK --type TYPE --year YEAR [options]
+python3 -m pip install -q "requests>=2.28.0"
+python3 scripts/run_report.py STOCK --type TYPE --year YEAR --output OUTPUT_DIR
 ```
 
-Use the wrapper script only for debugging or script-oriented workflows:
+Always pass `--output`. The CLI default is the current directory.
 
-```bash
-uv run python scripts/run_report.py STOCK --type TYPE --year YEAR [options]
-```
-
-Run deterministic offline checks before hitting live sources:
+Offline checks before live downloads:
 
 ```bash
 uv run python -m unittest discover -s tests -v
-uv run python scripts/verify_examples.py --list --details
+uv run scripts/verify_examples.py --list --details
 ```
 
 ## Verified Commands
@@ -41,42 +40,42 @@ A-share by code:
 Expected result: download Ping An Bank 2024 annual report PDF into `./test_output`.
 
 ```bash
-uv run stock-report-downloader 000001 -t annual -y 2024 -o ./test_output
+uv run scripts/run_report.py 000001 -t annual -y 2024 -o ./test_output
 ```
 
 A-share by name:
 Expected result: resolve to `000001` and download the same 2024 annual report PDF.
 
 ```bash
-uv run stock-report-downloader 平安银行 -t annual -y 2024 -o ./test_output
+uv run scripts/run_report.py 平安银行 -t annual -y 2024 -o ./test_output
 ```
 
 HK stock by code:
 Expected result: download Poly Property Services 2023 annual report in Chinese.
 
 ```bash
-uv run stock-report-downloader 06049 -t annual -y 2023 -m hk -o ./test_output
+uv run scripts/run_report.py 06049 -t annual -y 2023 -m hk -o ./test_output
 ```
 
 HK stock by simplified Chinese name:
 Expected result: resolve to `06049` and download the same 2023 annual report PDF.
 
 ```bash
-uv run stock-report-downloader 保利物业 -t annual -y 2023 -m hk -o ./test_output
+uv run scripts/run_report.py 保利物业 -t annual -y 2023 -m hk -o ./test_output
 ```
 
 HK stock with English preference:
 Expected result: download the English 2023 annual report when HKEX provides one.
 
 ```bash
-uv run stock-report-downloader 06049 -t annual -y 2023 -m hk -l en -o ./test_output
+uv run scripts/run_report.py 06049 -t annual -y 2023 -m hk -l en -o ./test_output
 ```
 
 Error handling check:
 Expected result: exit non-zero and report that no matching report was found.
 
 ```bash
-uv run stock-report-downloader 999999 -t annual -y 2024
+uv run scripts/run_report.py 999999 -t annual -y 2024
 ```
 
 ## Current Behavior
@@ -99,13 +98,4 @@ uv run stock-report-downloader 999999 -t annual -y 2024
 - cninfo report matching problems: `scripts/report_downloader/downloader_cninfo.py`
 - HKEX lookup or language-selection problems: `scripts/report_downloader/downloader_hkex.py`
 - Download validation or network error problems: `scripts/report_downloader/utils.py`
-- CLI invocation issues: `scripts/report_downloader/cli.py`
-
-## Files To Inspect When Fixing Issues
-
-- `scripts/report_downloader/cli.py`
-- `scripts/report_downloader/stock_search.py`
-- `scripts/report_downloader/downloader_cninfo.py`
-- `scripts/report_downloader/downloader_hkex.py`
-- `pyproject.toml`
-- `uv.lock`
+- CLI invocation issues: `scripts/report_downloader/cli.py` or `scripts/run_report.py`

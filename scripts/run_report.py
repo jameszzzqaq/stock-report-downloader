@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#   "requests>=2.28.0",
+# ]
+# ///
 from __future__ import annotations
 
-import os
-import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-def main() -> int:
-    repo_root = Path(__file__).resolve().parents[1]
-    env = os.environ.copy()
-    env.setdefault("UV_CACHE_DIR", str(repo_root / ".uv-cache"))
-    command = ["uv", "run", "stock-report-downloader", *sys.argv[1:]]
-    return subprocess.run(command, cwd=repo_root, env=env).returncode
+from report_downloader.cli import main
 
 
 if __name__ == "__main__":

@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#   "requests>=2.28.0",
+# ]
+# ///
 from __future__ import annotations
 
 import argparse
-import os
-import subprocess
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from report_downloader.cli import main as run_downloader
 
 
 EXAMPLES: dict[str, dict[str, object]] = {
@@ -53,12 +62,7 @@ def main() -> int:
         return 0
     if not args.example:
         raise SystemExit("Provide an example name or use --list.")
-
-    repo_root = Path(__file__).resolve().parents[1]
-    env = os.environ.copy()
-    env.setdefault("UV_CACHE_DIR", str(repo_root / ".uv-cache"))
-    command = ["uv", "run", "stock-report-downloader", *EXAMPLES[args.example]["command"]]
-    return subprocess.run(command, cwd=repo_root, env=env).returncode
+    return run_downloader(list(EXAMPLES[args.example]["command"]))
 
 
 if __name__ == "__main__":
